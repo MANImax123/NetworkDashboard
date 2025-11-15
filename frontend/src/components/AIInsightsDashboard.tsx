@@ -241,7 +241,9 @@ export function AIInsightsDashboard({ data }: AIInsightsDashboardProps) {
                       </span>
                       <span className="text-muted-foreground">
                         Expected: <span className="font-mono text-foreground">
-                          {anomaly.expected_range[0]} - {anomaly.expected_range[1]}
+                          {Array.isArray(anomaly.expected_range) && anomaly.expected_range.length >= 2
+                            ? `${anomaly.expected_range[0]} - ${anomaly.expected_range[1]}`
+                            : 'N/A'}
                         </span>
                       </span>
                       <span className="text-muted-foreground">

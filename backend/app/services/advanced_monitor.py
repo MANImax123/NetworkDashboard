@@ -12,12 +12,13 @@ import ipaddress
 import struct
 
 class AdvancedNetworkMonitor:
-    def __init__(self):
+    def __init__(self, network_monitor=None):
         self.protocol_stats = defaultdict(lambda: {"bytes": 0, "packets": 0, "incoming": 0, "outgoing": 0})
         self.port_stats = defaultdict(lambda: {"count": 0, "bytes": 0, "services": set()})
         self.device_cache = {}
         self.suspicious_ports = [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 993, 995, 1433, 1521, 3389, 4444, 5432, 5900, 6379]
         self.mac_vendor_cache = {}
+        self.network_monitor = network_monitor
         
     async def get_protocol_insights(self) -> Dict[str, Any]:
         """Get detailed protocol-level network insights"""
@@ -188,113 +189,113 @@ class AdvancedNetworkMonitor:
             return {"top_source_ports": [], "suspicious_activity": [], "service_breakdown": {}}
     
     async def scan_network_devices(self) -> List[Dict[str, Any]]:
-        """Perform ARP scanning to discover network devices"""
+        """Perform ARP scanning to discover network devices using real data from NetworkMonitor"""
         try:
-            devices = []
-            
-            # Get local network interface and subnet
-            hostname = socket.gethostname()
-            local_ip = socket.gethostbyname(hostname)
-            
-            # Simulate ARP scan results with realistic data
-            demo_devices = [
-                {
-                    "ip": "192.168.1.1",
-                    "mac": "a0:63:91:12:34:56",
-                    "hostname": "router.local",
-                    "vendor": "Netgear",
-                    "device_type": "Router",
-                    "status": "online",
-                    "uptime": "7 days, 14:32:12",
-                    "data_usage": {"sent": 125340000, "received": 234560000},
-                    "last_seen": datetime.now().isoformat(),
-                    "open_ports": [80, 443, 22],
-                    "os_guess": "Linux"
-                },
-                {
-                    "ip": "192.168.1.105",
-                    "mac": "b8:27:eb:ab:cd:ef",
-                    "hostname": "raspberrypi.local",
-                    "vendor": "Raspberry Pi Foundation",
-                    "device_type": "Single Board Computer",
-                    "status": "online",
-                    "uptime": "2 days, 8:15:30",
-                    "data_usage": {"sent": 12340000, "received": 23450000},
-                    "last_seen": datetime.now().isoformat(),
-                    "open_ports": [22, 80],
-                    "os_guess": "Linux (Raspbian)"
-                },
-                {
-                    "ip": "192.168.1.110",
-                    "mac": "00:1b:44:11:3a:b7",
-                    "hostname": "laptop-work",
-                    "vendor": "Dell Inc.",
-                    "device_type": "Laptop",
-                    "status": "online",
-                    "uptime": "1 day, 5:22:45",
-                    "data_usage": {"sent": 89340000, "received": 156780000},
-                    "last_seen": datetime.now().isoformat(),
-                    "open_ports": [445, 135],
-                    "os_guess": "Windows 11"
-                },
-                {
-                    "ip": "192.168.1.115",
-                    "mac": "ac:de:48:23:45:67",
-                    "hostname": "iphone-12",
-                    "vendor": "Apple, Inc.",
-                    "device_type": "Mobile Device",
-                    "status": "idle",
-                    "uptime": "12:45:20",
-                    "data_usage": {"sent": 45230000, "received": 67890000},
-                    "last_seen": (datetime.now() - timedelta(minutes=15)).isoformat(),
-                    "open_ports": [],
-                    "os_guess": "iOS"
-                },
-                {
-                    "ip": "192.168.1.120",
-                    "mac": "f4:f5:d8:34:56:78",
-                    "hostname": "smart-tv",
-                    "vendor": "Samsung Electronics",
-                    "device_type": "Smart TV",
-                    "status": "online",
-                    "uptime": "5 days, 12:30:15",
-                    "data_usage": {"sent": 23450000, "received": 125670000},
-                    "last_seen": datetime.now().isoformat(),
-                    "open_ports": [7001, 8001],
-                    "os_guess": "Tizen"
-                },
-                {
-                    "ip": "192.168.1.125",
-                    "mac": "44:65:0d:45:67:89",
-                    "hostname": "unknown-device",
-                    "vendor": "Unknown",
-                    "device_type": "Unknown",
-                    "status": "suspicious",
-                    "uptime": "0:15:30",
-                    "data_usage": {"sent": 1234000, "received": 567000},
-                    "last_seen": datetime.now().isoformat(),
-                    "open_ports": [4444, 1337],
-                    "os_guess": "Unknown"
-                }
-            ]
-            
-            # Add network metrics for each device
-            for device in demo_devices:
-                device.update({
-                    "signal_strength": -45 if device["status"] == "online" else -70,
-                    "connection_quality": "Excellent" if device["status"] == "online" else "Poor",
-                    "security_score": self._calculate_security_score(device),
-                    "bandwidth_usage": {
-                        "current": round((device["data_usage"]["sent"] + device["data_usage"]["received"]) / 1024 / 1024, 2),
-                        "peak": round((device["data_usage"]["sent"] + device["data_usage"]["received"]) * 1.5 / 1024 / 1024, 2)
+            # Get real devices from the NetworkMonitor if available
+            if self.network_monitor:
+                print(f"Advanced scan: Getting devices from NetworkMonitor...")
+                real_devices = await self.network_monitor.get_connected_devices()
+                print(f"Advanced scan: Got {len(real_devices)} devices from NetworkMonitor")
+                enhanced_devices = []
+                
+                for device in real_devices:
+                    # Enhance each device with additional metrics
+                    # Skip MAC vendor lookup for maximum speed
+                    vendor = "Unknown"
+                    
+                    enhanced_device = {
+                        "ip": device["ip"],
+                        "mac": device["mac"],
+                        "hostname": device["hostname"],
+                        "vendor": vendor,
+                        "device_type": self._guess_device_type(device["hostname"], device["mac"]),
+                        "status": device["status"],
+                        "uptime": "Unknown",  # Would need to ping or query device
+                        "data_usage": {"sent": 0, "received": 0},  # Would need packet sniffing
+                        "last_seen": device.get("last_seen", datetime.now().isoformat()),
+                        "open_ports": [],  # Would need port scanning
+                        "os_guess": "Unknown"
                     }
-                })
-            
-            return demo_devices
+                    
+                    # Add network metrics
+                    enhanced_device.update({
+                        "signal_strength": -45,
+                        "connection_quality": "Good",
+                        "security_score": self._calculate_security_score(enhanced_device),
+                        "bandwidth_usage": {
+                            "current": 0,
+                            "peak": 0
+                        }
+                    })
+                    
+                    enhanced_devices.append(enhanced_device)
+                
+                print(f"Advanced scan: Returning {len(enhanced_devices)} enhanced devices")
+                return enhanced_devices
+            else:
+                # Fallback to empty list if no NetworkMonitor available
+                print("Warning: No NetworkMonitor instance available for device scanning")
+                return []
             
         except Exception as e:
             print(f"Error scanning network devices: {e}")
+            import traceback
+            traceback.print_exc()
             return []
+    
+    def _get_mac_vendor_sync(self, mac_address: str) -> str:
+        """Get vendor information from MAC address (synchronous, simplified)"""
+        try:
+            if mac_address in self.mac_vendor_cache:
+                return self.mac_vendor_cache[mac_address]
+            
+            # Extract OUI (first 6 characters of MAC)
+            oui = mac_address.replace(":", "").replace("-", "").upper()[:6]
+            
+            # Known vendor mappings (expanded list)
+            vendor_map = {
+                "A06391": "Netgear",
+                "B827EB": "Raspberry Pi Foundation",
+                "001B44": "Dell Inc.",
+                "ACDE48": "Apple Inc.",
+                "F4F5D8": "Samsung Electronics",
+                "44650D": "D-Link Corporation",
+                "00155D": "Microsoft",
+                "001C42": "Parallels",
+                "001D7E": "Cisco Systems",
+                "080027": "Oracle VirtualBox",
+                "525400": "QEMU Virtual",
+                "000C29": "VMware",
+                "005056": "VMware",
+            }
+            
+            vendor = vendor_map.get(oui, "Unknown")
+            self.mac_vendor_cache[mac_address] = vendor
+            return vendor
+            
+        except Exception as e:
+            return "Unknown"
+    
+    def _guess_device_type(self, hostname: str, mac: str) -> str:
+        """Guess device type from hostname or MAC address"""
+        hostname_lower = hostname.lower()
+        
+        if any(x in hostname_lower for x in ["router", "gateway"]):
+            return "Router"
+        elif any(x in hostname_lower for x in ["laptop", "notebook"]):
+            return "Laptop"
+        elif any(x in hostname_lower for x in ["desktop", "pc"]):
+            return "Desktop"
+        elif any(x in hostname_lower for x in ["phone", "iphone", "android", "mobile"]):
+            return "Mobile Device"
+        elif any(x in hostname_lower for x in ["tv", "roku", "chromecast", "firestick"]):
+            return "Smart TV"
+        elif any(x in hostname_lower for x in ["iot", "smart", "sensor", "camera"]):
+            return "IoT Device"
+        elif any(x in hostname_lower for x in ["pi", "raspberry"]):
+            return "Single Board Computer"
+        else:
+            return "Unknown"
     
     def _calculate_security_score(self, device: Dict) -> Dict[str, Any]:
         """Calculate security score for a device"""

@@ -414,15 +414,15 @@ export function NetworkTopology({ data }: NetworkTopologyProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Vendor:</span>
-                    <span className="text-foreground">{selectedNode.device_info.vendor}</span>
+                    <span className="text-foreground">{selectedNode.device_info?.vendor ?? 'Unknown'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">OS:</span>
-                    <span className="text-foreground">{selectedNode.device_info.os}</span>
+                    <span className="text-foreground">{selectedNode.device_info?.os ?? 'Unknown'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Uptime:</span>
-                    <span className="text-foreground">{selectedNode.device_info.uptime}</span>
+                    <span className="text-foreground">{selectedNode.device_info?.uptime ?? 'Unknown'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Security Level:</span>
